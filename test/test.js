@@ -1,8 +1,8 @@
 // Copyright (c) 2015 David M. Lee, II
 'use strict';
 
-var pt = require('../index.js');
-var assert = require('assert');
+const pt = require('../index.js');
+const assert = require('assert');
 
 function later(when) {
   return new Promise(function(resolve, reject) {
@@ -27,6 +27,8 @@ describe('promise-timeout', function() {
           assert.fail('should not have resolved');
         }, function(err) {
           assert(err.stack.includes('test.js'));
+          assert(err.stack.startsWith('TimeoutError: Promise did not'));
+          assert.equal(err.name, 'TimeoutError');
         });
     });
 });

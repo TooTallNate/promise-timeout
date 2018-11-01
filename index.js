@@ -2,10 +2,16 @@
 'use strict';
 
 /**
- * Local reference to TimeoutError
- * @private
+ * Exception indicating that the timeout expired.
  */
-var TimeoutError;
+class TimeoutError extends Error {
+  constructor(timeoutMillis) {
+    super(`Promise did not resolve within ${timeoutMillis}ms`);
+    this.name = this.constructor.name;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+exports.TimeoutError = TimeoutError;
 
 /**
  * Rejects a promise with a {@link TimeoutError} if it does not settle within
@@ -16,34 +22,23 @@ var TimeoutError;
  * @returns {Promise} Either resolves/rejects with `promise`, or rejects with
  *                   `TimeoutError`, whichever settles first.
  */
-var timeout = module.exports.timeout = function(promise, timeoutMillis) {
-  var error = new TimeoutError(),
-      timeout;
+function timeout(promise, timeoutMillis) {
+  let timeoutId;
+  const error = new TimeoutError(timeoutMillis);
 
   return Promise.race([
     promise,
     new Promise(function(resolve, reject) {
-      timeout = setTimeout(function() {
+      timeoutId = setTimeout(function() {
         reject(error);
       }, timeoutMillis);
     }),
   ]).then(function(v) {
-    clearTimeout(timeout);
+    clearTimeout(timeoutId);
     return v;
   }, function(err) {
-    clearTimeout(timeout);
+    clearTimeout(timeoutId);
     throw err;
   });
-};
-
-/**
- * Exception indicating that the timeout expired.
- */
-TimeoutError = module.exports.TimeoutError = function() {
-  Error.call(this)
-  this.stack = Error().stack
-  this.message = 'Timeout';
-};
-
-TimeoutError.prototype = Object.create(Error.prototype);
-TimeoutError.prototype.name = "TimeoutError";
+}
+exports.timeout = timeout;
